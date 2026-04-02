@@ -7,8 +7,14 @@ import {
 import { getHarvests, addHarvest } from '../../services/api';
 import api from '../../services/api';
 import { Colors } from '../../constants/Colors';
+import MarketChatbot from '../../components/MarketChatbot';
+import { useTranslation } from 'react-i18next';
 
-const CROPS = ['Rice', 'Wheat', 'Tomato', 'Onion', 'Mango', 'Cotton', 'Sugarcane', 'Maize', 'Potato', 'Banana'];
+const CROPS = [
+  'Tomato', 'Potato', 'Onion', 'Rice', 'Wheat', 'Maize', 'Mango', 
+  'Banana', 'Jackfruit', 'Sugarcane', 'Cotton', 'Soybean', 
+  'Groundnut', 'Chilli', 'Pineapple'
+];
 
 const LANGUAGES = [
   { code: 'en', label: 'EN', name: 'English' },
@@ -55,11 +61,18 @@ const HarvestCard = ({ item }) => (
 );
 
 export default function HarvestScreen() {
+  const { t } = useTranslation();
   const [harvests, setHarvests]     = useState([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [modal, setModal]           = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Market Advisor / Chatbot states
+  const [chatModal, setChatModal]   = useState(false);
+  const [pricesLoading, setPricesLoading] = useState(false);
+
+  // Voice AI states
   const [voiceModal, setVoiceModal] = useState(false);
   const [voiceLang, setVoiceLang]   = useState('en');
   const [transcript, setTranscript] = useState('');
@@ -80,6 +93,27 @@ export default function HarvestScreen() {
     } catch (_) {}
     setLoading(false);
     setRefreshing(false);
+  };
+
+  const fetchMarketAnalysis = async (c) => {
+    setForm(f => ({ ...f, cropType: c }));
+    setPricesLoading(true);
+    try {
+      const { data } = await api.get(`/market/analysis?crop=${c}&quantity=0&unit=kg`);
+      if (data && data.found) {
+        setForm(f => ({
+          ...f,
+          farmerPayout: String(data.recommendedMin),
+          finalConsumerPrice: String(data.recommendedMax),
+          transportCost: String(Math.round(data.currentPrice * 0.05))
+        }));
+        // Optional: show a small toast here if a toast library was available
+      }
+    } catch (err) {
+      console.log('Could not fetch market analysis', err);
+    } finally {
+      setPricesLoading(false);
+    }
   };
 
   // Pulse animation for mic button
@@ -157,13 +191,13 @@ export default function HarvestScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>🌾 My Harvests</Text>
+        <Text style={styles.title}>🌾 {t('harvest.title')}</Text>
         <View style={styles.headerBtns}>
           <TouchableOpacity style={styles.voiceBtn} onPress={() => { setVoiceModal(true); startPulse(); }}>
-            <Text style={styles.voiceBtnText}>🎙 AI Assist</Text>
+            <Text style={styles.voiceBtnText}>🎙 {t('harvest.ai_assist')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.addBtn} onPress={() => setModal(true)}>
-            <Text style={styles.addBtnText}>+ Add</Text>
+            <Text style={styles.addBtnText}>+ {t('harvest.add')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -175,7 +209,7 @@ export default function HarvestScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🌱</Text>
-            <Text style={styles.emptyText}>No harvests yet.</Text>
+            <Text style={styles.emptyText}>{t('harvest.empty')}</Text>
             <Text style={styles.emptySubText}>Tap 🎙 AI Assist to log with AI or + Add to fill manually.</Text>
           </View>
         }
@@ -246,16 +280,16 @@ export default function HarvestScreen() {
         <View style={styles.modalOverlay}>
           <ScrollView>
             <View style={[styles.modalSheet, { marginTop: 60 }]}>
-              <Text style={styles.modalTitle}>Add Harvest Batch</Text>
+              <Text style={styles.modalTitle}>{t('harvest.add')} Batch</Text>
 
-              <Text style={styles.label}>Crop Type</Text>
+              <Text style={styles.label}>{t('harvest.crop')} {pricesLoading && <ActivityIndicator size="small" color={Colors.primary} style={{marginLeft: 8}} />}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
                 <View style={styles.cropRow}>
                   {CROPS.map((c) => (
                     <TouchableOpacity
                       key={c}
                       style={[styles.cropChip, form.cropType.toLowerCase() === c.toLowerCase() && styles.cropChipActive]}
-                      onPress={() => set('cropType')(c)}
+                      onPress={() => fetchMarketAnalysis(c)}
                     >
                       <Text style={[styles.cropChipText, form.cropType.toLowerCase() === c.toLowerCase() && styles.cropChipTextActive]}>{c}</Text>
                     </TouchableOpacity>
@@ -263,18 +297,18 @@ export default function HarvestScreen() {
                 </View>
               </ScrollView>
 
-              <Text style={styles.label}>Location / Village</Text>
+              <Text style={styles.label}>{t('harvest.location')}</Text>
               <TextInput style={styles.input} placeholder="e.g. Kurnool, AP" placeholderTextColor={Colors.textMuted}
                 value={form.location} onChangeText={set('location')} />
 
               <View style={styles.row}>
                 <View style={{ flex: 2 }}>
-                  <Text style={styles.label}>Quantity</Text>
+                  <Text style={styles.label}>{t('harvest.quantity')}</Text>
                   <TextInput style={styles.input} placeholder="500" placeholderTextColor={Colors.textMuted}
                     value={form.quantity} onChangeText={set('quantity')} keyboardType="numeric" />
                 </View>
                 <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={styles.label}>Unit</Text>
+                  <Text style={styles.label}>{t('harvest.unit')}</Text>
                   <TouchableOpacity
                     style={[styles.input, { justifyContent: 'center', alignItems: 'center', height: 50 }]}
                     onPress={() => set('unit')(form.unit === 'kg' ? 'quintal' : form.unit === 'quintal' ? 'ton' : 'kg')}
@@ -284,15 +318,15 @@ export default function HarvestScreen() {
                 </View>
               </View>
 
-              <Text style={styles.label}>Farmer Payout (₹/kg) *</Text>
+              <Text style={styles.label}>{t('harvest.payout')} *</Text>
               <TextInput style={styles.input} placeholder="e.g. 30" placeholderTextColor={Colors.textMuted}
                 value={form.farmerPayout} onChangeText={set('farmerPayout')} keyboardType="numeric" />
 
-              <Text style={styles.label}>Consumer Price (₹/kg) *</Text>
+              <Text style={styles.label}>{t('harvest.consumer_price')} *</Text>
               <TextInput style={styles.input} placeholder="e.g. 55" placeholderTextColor={Colors.textMuted}
                 value={form.finalConsumerPrice} onChangeText={set('finalConsumerPrice')} keyboardType="numeric" />
 
-              <Text style={styles.label}>Transport Cost (₹/kg)</Text>
+              <Text style={styles.label}>{t('harvest.transport')}</Text>
               <TextInput style={styles.input} placeholder="e.g. 5" placeholderTextColor={Colors.textMuted}
                 value={form.transportCost} onChangeText={set('transportCost')} keyboardType="numeric" />
 
@@ -303,7 +337,7 @@ export default function HarvestScreen() {
                 <TouchableOpacity style={styles.submitBtn} onPress={handleAdd} disabled={submitting}>
                   {submitting
                     ? <ActivityIndicator color="#fff" />
-                    : <Text style={styles.submitBtnText}>Save to Ledger</Text>
+                    : <Text style={styles.submitBtnText}>{t('harvest.submit')}</Text>
                   }
                 </TouchableOpacity>
               </View>
@@ -311,6 +345,22 @@ export default function HarvestScreen() {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* AI Market Chatbot Modal */}
+      <MarketChatbot 
+        visible={chatModal} 
+        onClose={() => setChatModal(false)} 
+        initialCropContext={form.cropType} 
+      />
+
+      {/* Floating Advisor Button */}
+      <TouchableOpacity 
+        style={styles.fabBtn} 
+        onPress={() => setChatModal(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.fabIcon}>🤖</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -387,4 +437,26 @@ const styles = StyleSheet.create({
   cancelBtn:     { flex: 1, padding: 14, borderRadius: 12, alignItems: 'center', backgroundColor: Colors.bgInput },
   submitBtn:     { flex: 1, padding: 14, borderRadius: 12, alignItems: 'center', backgroundColor: Colors.primary },
   submitBtnText: { color: '#fff', fontWeight: '700' },
+
+  fabBtn: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.bgCard,
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  fabIcon: {
+    fontSize: 28,
+  }
 });

@@ -7,6 +7,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { getHarvests, getMarketPrices, getIoTReadings } from '../../services/api';
 import { Colors } from '../../constants/Colors';
+import LanguageSelector from '../../components/LanguageSelector';
+import { useTranslation } from 'react-i18next';
 
 const SummaryCard = ({ icon, label, value, color }) => (
   <View style={[styles.card, { borderLeftColor: color, borderLeftWidth: 3 }]}>
@@ -18,6 +20,7 @@ const SummaryCard = ({ icon, label, value, color }) => (
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [user, setUser]         = useState(null);
   const [harvests, setHarvests] = useState([]);
   const [market, setMarket]     = useState([]);
@@ -63,27 +66,25 @@ export default function DashboardScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Good day 👋</Text>
+          <Text style={styles.greeting}>{t('dashboard.greeting')} 👋</Text>
           <Text style={styles.brandName}>KrishiTrace</Text>
         </View>
-        <TouchableOpacity style={styles.alertBtn}>
-          <Text style={{ fontSize: 22 }}>🔔</Text>
-        </TouchableOpacity>
+        <LanguageSelector />
       </View>
 
       {/* Summary Cards */}
       <Text style={styles.sectionTitle}>Overview</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cardRow}>
-        <SummaryCard icon="🌾" label="Total Batches"  value={harvests.length}        color={Colors.primary} />
-        <SummaryCard icon="📈" label="Market Prices"  value={market.length + ' crops'} color={Colors.gold}   />
-        <SummaryCard icon="📡" label="IoT Sensors"    value={iot.length + ' active'}   color={Colors.blue}   />
+        <SummaryCard icon="🌾" label={t('tabs.harvest')}  value={harvests.length}        color={Colors.primary} />
+        <SummaryCard icon="📈" label={t('dashboard.market')}  value={market.length + ''} color={Colors.gold}   />
+        <SummaryCard icon="📡" label={t('dashboard.iot')}    value={iot.length + ''}   color={Colors.blue}   />
         <SummaryCard icon="✅" label="Verified"        value={harvests.filter(h => h.verified).length} color={Colors.success} />
       </ScrollView>
 
       {/* Latest Harvest */}
       {latest && (
         <>
-          <Text style={styles.sectionTitle}>Latest Harvest Batch</Text>
+          <Text style={styles.sectionTitle}>{t('dashboard.recent_activity')}</Text>
           <View style={styles.harvestCard}>
             <View style={styles.harvestRow}>
               <Text style={styles.harvestCrop}>{latest.cropType || latest.crop || 'Crop'}</Text>
@@ -106,24 +107,24 @@ export default function DashboardScreen() {
               style={styles.viewBtn}
               onPress={() => router.push('/(tabs)/harvest')}
             >
-              <Text style={styles.viewBtnText}>View All Harvests →</Text>
+              <Text style={styles.viewBtnText}>View All →</Text>
             </TouchableOpacity>
           </View>
         </>
       )}
 
       {/* Quick Actions */}
-      <Text style={styles.sectionTitle}>Quick Actions</Text>
+      <Text style={styles.sectionTitle}>{t('dashboard.quick_actions')}</Text>
       <View style={styles.actionGrid}>
         {[
-          { icon: '➕', label: 'Add Harvest',  route: '/(tabs)/harvest' },
-          { icon: '📷', label: 'Scan QR',      route: '/(tabs)/scan'    },
-          { icon: '📈', label: 'Market',        route: '/(tabs)/market'  },
-          { icon: '🔗', label: 'Ledger',        route: '/(tabs)/ledger'  },
-          { icon: '📡', label: 'IoT Sensors',  route: '/(tabs)/iot'     },
-          { icon: '📊', label: 'Reports',       route: '/(tabs)/reports' },
-          { icon: '🗺️',  label: 'Farm Map',     route: '/(tabs)/gis'     },
-          { icon: '👤', label: 'Profile',       route: '/(tabs)/profile' },
+          { icon: '➕', label: t('harvest.add'),     route: '/(tabs)/harvest' },
+          { icon: '📷', label: t('tabs.scan'),      route: '/(tabs)/scan'    },
+          { icon: '📈', label: t('dashboard.market'),route: '/(tabs)/market'  },
+          { icon: '🔗', label: t('dashboard.ledger'),route: '/(tabs)/ledger'  },
+          { icon: '📡', label: t('dashboard.iot'),   route: '/(tabs)/iot'     },
+          { icon: '📊', label: t('dashboard.reports'),route: '/(tabs)/reports' },
+          { icon: '🗺️',  label: t('dashboard.gis'),   route: '/(tabs)/gis'     },
+          { icon: '👤', label: t('tabs.profile'),   route: '/(tabs)/profile' },
         ].map(({ icon, label, route }) => (
           <TouchableOpacity
             key={label}
