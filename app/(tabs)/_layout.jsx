@@ -40,6 +40,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="iot"     options={{ href: null }} />
       <Tabs.Screen name="reports" options={{ href: null }} />
       <Tabs.Screen name="gis"     options={{ href: null }} />
+      <Tabs.Screen name="tractor" options={{ href: null }} />
+      <Tabs.Screen name="equipment" options={{ href: null }} />
     </Tabs>
   );
 }

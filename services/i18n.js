@@ -15,7 +15,7 @@ const resources = {
       dashboard: {
         greeting: 'Welcome back.',
         quick_actions: 'Quick Actions',
-        ledger: 'Blockchain Ledger',
+        ledger: 'Ledger',
         reports: 'Analytics / Reports',
         iot: 'IoT Sensors',
         gis: 'GIS Map',
@@ -45,7 +45,7 @@ const resources = {
       dashboard: {
         greeting: 'वापसी पर स्वागत है।',
         quick_actions: 'त्वरित कार्रवाई',
-        ledger: 'ब्लॉकचेन बहीखाता',
+        ledger: 'बहीखाता',
         reports: 'रिपोर्ट',
         iot: 'IoT सेंसर',
         gis: 'खेत का नक्शा',
@@ -65,7 +65,7 @@ const resources = {
       dashboard: {
         greeting: 'స్వాగతం.',
         quick_actions: 'త్వరిత చర్యలు',
-        ledger: 'బ్లాక్‌చెయిన్ లెడ్జర్',
+        ledger: 'లెడ్జర్',
         reports: 'నివేదికలు',
         iot: 'IoT సెన్సార్లు',
         gis: 'పొలం మ్యాప్',
@@ -83,7 +83,7 @@ const resources = {
     translation: {
       tabs: { home: 'ಮುಖಪುಟ', harvest: 'ಫಸಲು', scan: 'ಸ್ಕ್ಯಾನ್', hub: 'ಹಬ್', profile: 'ಪ್ರೊಫೈಲ್' },
       dashboard: {
-        greeting: 'ಸ್ವಾಗತ.', quick_actions: 'ತ್ವರಿತ ಕ್ರಿಯೆಗಳು', ledger: 'ಬ್ಲಾಕ್‌ಚೈನ್ ಲೆಡ್ಜರ್', reports: 'ವರದಿಗಳು',
+        greeting: 'ಸ್ವಾಗತ.', quick_actions: 'ತ್ವರಿತ ಕ್ರಿಯೆಗಳು', ledger: 'ಲೆಡ್ಜರ್', reports: 'ವರದಿಗಳು',
         iot: 'ಸಂವೇದಕಗಳು (IoT)', gis: 'ನಕ್ಷೆ', market: 'ಮಾರುಕಟ್ಟೆ ಬೆಲೆಗಳು', recent_activity: 'ಇತ್ತೀಚಿನ ಚಟುವಟಿಕೆ'
       },
       harvest: {
@@ -97,7 +97,7 @@ const resources = {
     translation: {
       tabs: { home: 'முகப்பு', harvest: 'அறுவடை', scan: 'ஸ்கேன்', hub: 'மையம்', profile: 'விவரம்' },
       dashboard: {
-        greeting: 'வரவேற்கிறோம்.', quick_actions: 'செயல்பாடுகள்', ledger: 'பட்டியல்', reports: 'அறிக்கைகள்',
+        greeting: 'வரவேற்கிறோம்.', quick_actions: 'செயல்பாடுகள்', ledger: 'லெட்ஜர்', reports: 'அறிக்கைகள்',
         iot: 'கருவிகள்', gis: 'வரைபடம்', market: 'சந்தை விலைகள்', recent_activity: 'சமீபத்திய செயல்பாடு'
       },
       harvest: {
