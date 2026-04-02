@@ -2,8 +2,9 @@ import { useEffect, useState, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Modal, TextInput, Alert, ActivityIndicator, RefreshControl,
-  Animated, ScrollView,
+  Animated, ScrollView, Platform,
 } from 'react-native';
+import Voice from '@react-native-voice/voice';
 import { getHarvests, addHarvest } from '../../services/api';
 import api from '../../services/api';
 import { Colors } from '../../constants/Colors';
@@ -11,19 +12,19 @@ import { Colors } from '../../constants/Colors';
 const CROPS = ['Rice', 'Wheat', 'Tomato', 'Onion', 'Mango', 'Cotton', 'Sugarcane', 'Maize', 'Potato', 'Banana'];
 
 const LANGUAGES = [
-  { code: 'en', label: 'EN', name: 'English' },
-  { code: 'hi', label: 'हि', name: 'Hindi' },
-  { code: 'te', label: 'తె', name: 'Telugu' },
-  { code: 'kn', label: 'ಕ', name: 'Kannada' },
-  { code: 'ta', label: 'த',  name: 'Tamil' },
+  { code: 'en-IN', label: 'EN', name: 'English' },
+  { code: 'hi-IN', label: 'हि', name: 'Hindi' },
+  { code: 'te-IN', label: 'తె', name: 'Telugu' },
+  { code: 'kn-IN', label: 'ಕ', name: 'Kannada' },
+  { code: 'ta-IN', label: 'த',  name: 'Tamil' },
 ];
 
 const VOICE_HINTS = {
-  en: '"Tomato 50 kg harvest date 10th March payout 30 rupees"',
-  hi: '"टमाटर 50 किलो कटाई तारीख 10 मार्च पेआउट 30 रुपये"',
-  te: '"టమాటా 50 కేజీలు కోత తేదీ 10 మార్చి పేమెంట్ 30 రూపాయలు"',
-  kn: '"ಟೊಮ್ಯಾಟೊ 50 ಕಿಲೋ ಕೊಯ್ಲು ದಿನಾಂಕ 10 ಮಾರ್ಚ್ ಪಾವತಿ 30 ರೂಪಾಯಿ"',
-  ta: '"தக்காளி 50 கிலோ அறுவடை தேதி 10 மார்ச் கட்டணம் 30 ரூபாய்"',
+  'en-IN': '"Tomato 50 kg harvest date 10th March payout 30 rupees"',
+  'hi-IN': '"टमाटर 50 किलो कटाई तारीख 10 मार्च पेआउट 30 रुपये"',
+  'te-IN': '"టమాటా 50 కేజీలు కోత తేదీ 10 మార్చి పేమెంట్ 30 రూపాయలు"',
+  'kn-IN': '"ಟೊಮ್ಯಾಟೊ 50 ಕಿಲೋ ಕೊಯ್ಲು ದಿನಾಂಕ 10 ಮಾರ್ಚ್ ಪಾವತಿ 30 ರೂಪಾಯಿ"',
+  'ta-IN': '"தக்காளி 50 கிலோ அறுவடை தேதி 10 மார்ச் கட்டணம் 30 ரூபாய்"',
 };
 
 const statusColor = (s) => {
@@ -60,8 +61,11 @@ export default function HarvestScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [modal, setModal]           = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Voice states
   const [voiceModal, setVoiceModal] = useState(false);
-  const [voiceLang, setVoiceLang]   = useState('en');
+  const [voiceLang, setVoiceLang]   = useState('en-IN');
+  const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [parsing, setParsing]       = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -71,7 +75,30 @@ export default function HarvestScreen() {
     farmerPayout: '', finalConsumerPrice: '', transportCost: '', notes: '',
   });
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { 
+    load(); 
+    
+    // Voice event listeners
+    Voice.onSpeechStart = () => setIsListening(true);
+    Voice.onSpeechEnd = () => setIsListening(false);
+    Voice.onSpeechError = (e) => {
+      setIsListening(false);
+      stopPulse();
+      // Code 7 is usually No match/user didn't speak
+      if (e.error?.code !== '7') {
+         Alert.alert('Microphone Error', e.error?.message || 'Could not connect to microphone.');
+      }
+    };
+    Voice.onSpeechResults = (e) => {
+      if (e.value && e.value.length > 0) {
+        setTranscript(e.value[0]);
+      }
+    };
+
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
+  }, []);
 
   const load = async () => {
     try {
@@ -84,25 +111,51 @@ export default function HarvestScreen() {
 
   // Pulse animation for mic button
   const startPulse = () => {
+    pulseAnim.setValue(1);
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.2, duration: 600, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1,   duration: 600, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1.25, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1,   duration: 800, useNativeDriver: true }),
       ])
     ).start();
   };
+  
   const stopPulse = () => { pulseAnim.stopAnimation(); pulseAnim.setValue(1); };
+
+  const startListeningNode = async () => {
+    try {
+      setTranscript('');
+      setIsListening(true);
+      startPulse();
+      await Voice.start(voiceLang);
+    } catch (e) {
+      console.error(e);
+      Alert.alert('Error', 'Failed to start voice recognition.');
+      setIsListening(false);
+      stopPulse();
+    }
+  };
+
+  const stopListeningNode = async () => {
+    try {
+      setIsListening(false);
+      stopPulse();
+      await Voice.stop();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleVoiceSubmit = async () => {
     if (!transcript.trim()) {
-      Alert.alert('Empty Transcript', 'Please type what you would say.');
+      Alert.alert('No speech detected', 'Please say something to log the harvest.');
       return;
     }
     setParsing(true);
     try {
       const { data } = await api.post('/harvest/voice', {
         transcript: transcript.trim(),
-        language: voiceLang,
+        language: voiceLang.split('-')[0], // e.g. "en" or "hi"
       });
       const p = data.parsed;
       setForm((f) => ({
@@ -159,7 +212,7 @@ export default function HarvestScreen() {
       <View style={styles.header}>
         <Text style={styles.title}>🌾 My Harvests</Text>
         <View style={styles.headerBtns}>
-          <TouchableOpacity style={styles.voiceBtn} onPress={() => { setVoiceModal(true); startPulse(); }}>
+          <TouchableOpacity style={styles.voiceBtn} onPress={() => { setVoiceModal(true); setTranscript(''); }}>
             <Text style={styles.voiceBtnText}>🎙 Voice</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.addBtn} onPress={() => setModal(true)}>
@@ -184,13 +237,12 @@ export default function HarvestScreen() {
       />
 
       {/* ── Voice Input Modal ── */}
-      <Modal visible={voiceModal} animationType="slide" transparent onRequestClose={() => { setVoiceModal(false); stopPulse(); }}>
+      <Modal visible={voiceModal} animationType="slide" transparent onRequestClose={() => { setVoiceModal(false); stopListeningNode(); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>🎙 Voice Input</Text>
+            <Text style={styles.modalTitle}>🎙 Native Voice Input</Text>
             <Text style={styles.modalSubtitle}>
-              In a production build, tap the mic and speak in your language.{'\n'}
-              For this demo, type what you would say — the AI will parse it!
+              Speak natively into your device {Platform.OS === 'android' ? '(Requires Dev Build/APK)' : ''}
             </Text>
 
             {/* Language Selector */}
@@ -210,38 +262,46 @@ export default function HarvestScreen() {
               ))}
             </View>
 
-            {/* Mic Button (visual) */}
-            <View style={styles.micArea}>
-              <Animated.View style={[styles.micRing, { transform: [{ scale: pulseAnim }] }]}>
-                <View style={styles.micBtn}>
-                  <Text style={styles.micIcon}>🎙</Text>
-                </View>
-              </Animated.View>
-              <Text style={styles.micHint}>Type your speech below</Text>
-            </View>
-
             {/* Hint */}
             <View style={styles.hintBox}>
-              <Text style={styles.hintLabel}>Example phrase:</Text>
+              <Text style={styles.hintLabel}>Say exactly this:</Text>
               <Text style={styles.hintText}>{VOICE_HINTS[voiceLang]}</Text>
             </View>
 
-            {/* Transcript Input */}
-            <Text style={styles.label}>Your speech (type here)</Text>
-            <TextInput
-              style={[styles.input, { height: 90 }]}
-              placeholder={VOICE_HINTS[voiceLang]}
-              placeholderTextColor={Colors.textMuted}
-              value={transcript}
-              onChangeText={setTranscript}
-              multiline
-            />
+            {/* Live Transcript */}
+            <View style={styles.transcriptBox}>
+              {transcript ? (
+                 <Text style={styles.transcriptText}>"{transcript}"</Text>
+              ) : (
+                 <Text style={styles.transcriptPlaceholder}>
+                   {isListening ? "Listening..." : "Tap the big mic icon below and speak..."}
+                 </Text>
+              )}
+            </View>
+
+            {/* Mic Record Button */}
+            <View style={styles.micArea}>
+              <TouchableOpacity onPress={isListening ? stopListeningNode : startListeningNode} activeOpacity={0.8}>
+                <Animated.View style={[styles.micRing, isListening && { backgroundColor: Colors.error + '44' }, { transform: [{ scale: pulseAnim }] }]}>
+                  <View style={[styles.micBtn, isListening && { backgroundColor: Colors.error }]}>
+                    <Text style={[styles.micIcon, { color: '#fff' }]}>🎙</Text>
+                  </View>
+                </Animated.View>
+              </TouchableOpacity>
+              <Text style={[styles.micHint, isListening && { color: Colors.error, fontWeight: '700' }]}>
+                {isListening ? 'Tap to stop recording' : 'Tap to start speaking'}
+              </Text>
+            </View>
 
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setVoiceModal(false); stopPulse(); setTranscript(''); }}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setVoiceModal(false); stopListeningNode(); setTranscript(''); }}>
                 <Text style={{ color: Colors.textSecondary, fontWeight: '600' }}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.submitBtn} onPress={handleVoiceSubmit} disabled={parsing}>
+              <TouchableOpacity 
+                style={[styles.submitBtn, !transcript && { opacity: 0.5 }]} 
+                onPress={handleVoiceSubmit} 
+                disabled={parsing || !transcript}
+              >
                 {parsing
                   ? <ActivityIndicator color="#fff" />
                   : <Text style={styles.submitBtnText}>🤖 Parse with AI</Text>
@@ -374,11 +434,15 @@ const styles = StyleSheet.create({
   langBtnTextActive: { color: '#fff' },
   langName:        { color: Colors.textMuted, fontSize: 9, marginTop: 2 },
 
+  transcriptBox:   { backgroundColor: Colors.bgInput, borderRadius: 12, padding: 16, minHeight: 80, justifyContent: 'center', marginBottom: 20, borderWidth: 1, borderColor: Colors.border },
+  transcriptText:  { color: Colors.textPrimary, fontSize: 16, fontStyle: 'italic', textAlign: 'center' },
+  transcriptPlaceholder: { color: Colors.textMuted, fontSize: 14, textAlign: 'center' },
+
   micArea: { alignItems: 'center', marginBottom: 16 },
   micRing: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.blue + '33', justifyContent: 'center', alignItems: 'center' },
   micBtn:  { width: 60, height: 60, borderRadius: 30, backgroundColor: Colors.blue, justifyContent: 'center', alignItems: 'center' },
   micIcon: { fontSize: 28 },
-  micHint: { color: Colors.textSecondary, fontSize: 13, marginTop: 8 },
+  micHint: { color: Colors.textSecondary, fontSize: 13, marginTop: 12 },
 
   hintBox:   { backgroundColor: Colors.bgInput, borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: Colors.border },
   hintLabel: { color: Colors.textMuted, fontSize: 11, marginBottom: 4 },

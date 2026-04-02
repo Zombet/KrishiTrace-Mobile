@@ -17,11 +17,16 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.krishitrace.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0a1628"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -34,10 +39,23 @@
         {
           "cameraPermission": "Allow KrishiTrace to access your camera for QR scanning."
         }
+      ],
+      [
+        "@react-native-voice/voice",
+        {
+          "microphonePermission": "Allow KrishiTrace to access the microphone for voice logging.",
+          "speechRecognitionPermission": "Allow KrishiTrace to securely recognize your speech."
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8591f0d7-ae97-47ae-9c79-1035cef93022"
+      }
     }
   }
 }
