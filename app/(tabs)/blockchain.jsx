@@ -311,8 +311,8 @@ export default function BlockchainExplorer() {
           {/* Type */}
           <Text style={[styles.blockType, { color: blockColor }]}>
             {isGenesis ? '🌱 Genesis' :
-             item.data?.type === 'HARVEST_CREATED' ? `🌾 ${item.data.cropType || 'Harvest'}` :
-             isTampered ? '⚠️ Tampered' : item.data?.type || 'Data'}
+              item.data?.type === 'HARVEST_CREATED' ? `🌾 ${item.data.cropType || 'Harvest'}` :
+                isTampered ? '⚠️ Tampered' : item.data?.type || 'Data'}
           </Text>
 
           {/* Harvest info */}
@@ -477,11 +477,11 @@ const styles = StyleSheet.create({
   statusTitle: { fontSize: 16, fontWeight: '800' },
   statusSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
 
-  actionRow: { maxHeight: 60, marginTop: 12 },
-  actionRowContent: { paddingHorizontal: 16, gap: 8 },
+  actionRow: { marginTop: 8, marginBottom: 4, flexShrink: 0, height: 58 },
+  actionRowContent: { paddingHorizontal: 16, paddingVertical: 6, gap: 10, alignItems: 'center' },
   actionBtn: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14,
-    paddingVertical: 10, borderRadius: 12, borderWidth: 1,
+    paddingVertical: 10, borderRadius: 12, borderWidth: 1.5,
   },
   actionIcon: { fontSize: 16, marginRight: 6 },
   actionText: { fontSize: 13, fontWeight: '700' },

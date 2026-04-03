@@ -195,6 +195,10 @@ export default function HarvestScreen() {
       return;
     }
     setSubmitting(true);
+    setModal(false);
+
+    // Try API call (optional — works offline too)
+    let harvestId = Date.now().toString();
     try {
       const res = await addHarvest({
         ...form,
@@ -203,13 +207,17 @@ export default function HarvestScreen() {
         finalConsumerPrice: Number(form.finalConsumerPrice),
         transportCost:      Number(form.transportCost || 0),
       });
-      setModal(false);
+      harvestId = res.data?._id || res.data?.data?._id || harvestId;
+      load();
+    } catch (err) {
+      console.log('API unavailable, recording locally on blockchain only:', err?.message);
+    }
 
-      // Show mining animation
-      const interval = showMiningAnimation();
+    // Show mining animation
+    const interval = showMiningAnimation();
 
-      // Write block to local blockchain
-      const harvestId = res.data?._id || res.data?.data?._id || Date.now().toString();
+    try {
+      // Write block to local blockchain (always runs)
       const { block, chainLength } = await blockchain.addBlock({
         type: 'HARVEST_CREATED',
         harvestId,
@@ -226,14 +234,14 @@ export default function HarvestScreen() {
       hideMiningAnimation(interval);
 
       setForm({ cropType: '', location: '', quantity: '', unit: 'kg', farmerPayout: '', finalConsumerPrice: '', transportCost: '', notes: '' });
-      load();
 
       Alert.alert(
         '⛏️ Block Mined!',
         `Block #${block.index} added to chain\nHash: ${block.hash.slice(0, 16)}...\nTotal blocks: ${chainLength}`
       );
     } catch (err) {
-      Alert.alert('Error', err?.response?.data?.message || 'Failed to add harvest.');
+      hideMiningAnimation(interval);
+      Alert.alert('Error', 'Failed to mine block: ' + (err?.message || 'Unknown error'));
     } finally {
       setSubmitting(false);
     }
