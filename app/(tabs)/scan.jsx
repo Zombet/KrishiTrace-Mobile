@@ -10,13 +10,12 @@ import blockchain from '../../services/blockchain';
 
 export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
-  const [scanning, setScanning]   = useState(false);
-  const [result, setResult]       = useState(null);
-  const [loading, setLoading]     = useState(false);
-  const [scanned, setScanned]     = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [scanned, setScanned] = useState(false);
   const [chainStatus, setChainStatus] = useState(null);
 
-  // Load chain validation on mount
   useEffect(() => {
     blockchain.getChainStats().then(setChainStatus).catch(() => {});
   }, []);
@@ -37,7 +36,7 @@ export default function ScanScreen() {
         err?.response?.status === 404
           ? 'Batch not found. This QR may not be from KrishiTrace.'
           : 'Failed to fetch trace data. Check your internet connection.',
-        [{ text: 'OK', onPress: () => setScanned(false) }]
+        [{ text: 'OK', onPress: () => setScanned(false) }],
       );
     } finally {
       setLoading(false);
@@ -51,7 +50,7 @@ export default function ScanScreen() {
   if (!permission.granted) {
     return (
       <View style={styles.center}>
-        <Text style={{ fontSize: 48, marginBottom: 16 }}>📷</Text>
+        <Text style={styles.heroIcon}>📷</Text>
         <Text style={styles.permTitle}>Camera Access Required</Text>
         <Text style={styles.permSubtitle}>KrishiTrace needs camera access to scan QR codes on harvest batches.</Text>
         <TouchableOpacity style={styles.permBtn} onPress={requestPermission}>
@@ -70,20 +69,18 @@ export default function ScanScreen() {
           <Text style={styles.resultSubtitle}>Supply chain verified in KrishiTrace records</Text>
         </View>
 
-        {/* Blockchain Verification */}
         {chainStatus && (
           <View style={[
             styles.chainBanner,
-            { backgroundColor: chainStatus.isValid ? Colors.success + '15' : Colors.error + '15',
-              borderColor: chainStatus.isValid ? Colors.success + '40' : Colors.error + '40' }
-          ]}>
-            <Text style={{ fontSize: 24, marginRight: 10 }}>
-              {chainStatus.isValid ? '✅' : '❌'}
-            </Text>
+            {
+              backgroundColor: chainStatus.isValid ? Colors.success + '15' : Colors.error + '15',
+              borderColor: chainStatus.isValid ? Colors.success + '40' : Colors.error + '40',
+            },
+          ]}
+          >
+            <Text style={styles.chainIcon}>{chainStatus.isValid ? '✅' : '❌'}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.chainTitle, {
-                color: chainStatus.isValid ? Colors.success : Colors.error
-              }]}>
+              <Text style={[styles.chainTitle, { color: chainStatus.isValid ? Colors.success : Colors.error }]}>
                 {chainStatus.isValid ? 'Blockchain Verified' : 'Chain Integrity Broken'}
               </Text>
               <Text style={styles.chainSub}>
@@ -93,20 +90,19 @@ export default function ScanScreen() {
           </View>
         )}
 
-        {/* Batch Info */}
-        <Section title="🌾 Crop Information">
+        <Section title="Crop Information">
           <Row label="Crop" value={result.cropType || result.crop || '—'} />
           <Row label="Quantity" value={`${result.quantity || '—'} ${result.unit || 'kg'}`} />
           <Row label="Status" value={result.status || '—'} highlight />
         </Section>
 
-        <Section title="📍 Origin">
+        <Section title="Origin">
           <Row label="Location" value={result.location || '—'} />
           <Row label="Harvest Date" value={result.harvestDate ? new Date(result.harvestDate).toDateString() : '—'} />
         </Section>
 
         {result.ledger && (
-          <Section title="🔗 Ledger">
+          <Section title="Ledger">
             <Row label="Block Hash" value={result.ledger.hash || '—'} mono />
             <Row label="Timestamp" value={result.ledger.timestamp ? new Date(result.ledger.timestamp).toLocaleString() : '—'} />
             <Row label="Verified By" value={result.ledger.verifiedBy || '—'} />
@@ -114,7 +110,7 @@ export default function ScanScreen() {
         )}
 
         {result.iot && (
-          <Section title="📡 IoT Sensor Data">
+          <Section title="IoT Sensor Data">
             <Row label="Temperature" value={result.iot.temperature ? `${result.iot.temperature}°C` : '—'} />
             <Row label="Humidity" value={result.iot.humidity ? `${result.iot.humidity}%` : '—'} />
           </Section>
@@ -149,7 +145,7 @@ export default function ScanScreen() {
           </View>
         )}
         <TouchableOpacity style={styles.cancelScanBtn} onPress={() => setScanning(false)}>
-          <Text style={styles.cancelScanText}>✕ Cancel</Text>
+          <Text style={styles.cancelScanText}>Cancel</Text>
         </TouchableOpacity>
       </View>
     );
@@ -157,11 +153,17 @@ export default function ScanScreen() {
 
   return (
     <View style={styles.center}>
-      <Text style={{ fontSize: 80 }}>📷</Text>
+      <Text style={styles.heroIcon}>📷</Text>
       <Text style={styles.scanTitle}>QR Trace Scanner</Text>
       <Text style={styles.scanSubtitle}>
         Scan any KrishiTrace QR code to view the full farm-to-table supply chain trace.
       </Text>
+      <View style={styles.tipCard}>
+        <Text style={styles.tipTitle}>Farmer tip</Text>
+        <Text style={styles.tipText}>
+          Use this at mandi pickup or delivery time to quickly confirm crop history and trust.
+        </Text>
+      </View>
       <TouchableOpacity style={styles.startBtn} onPress={() => setScanning(true)}>
         <Text style={styles.startBtnText}>Start Scanning</Text>
       </TouchableOpacity>
@@ -196,17 +198,25 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg, padding: 32 },
   resultContent: { padding: 20, paddingTop: 56, paddingBottom: 60 },
-
+  heroIcon: { fontSize: 80, marginBottom: 8 },
   permTitle: { color: Colors.textPrimary, fontSize: 20, fontWeight: '700', textAlign: 'center' },
   permSubtitle: { color: Colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8, marginBottom: 24 },
   permBtn: { backgroundColor: Colors.primary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12 },
   permBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-
   scanTitle: { color: Colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 16, textAlign: 'center' },
-  scanSubtitle: { color: Colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 22, marginBottom: 32 },
+  scanSubtitle: { color: Colors.textSecondary, fontSize: 14, textAlign: 'center', marginTop: 8, lineHeight: 22, marginBottom: 20 },
+  tipCard: {
+    backgroundColor: Colors.bgCard,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 16,
+    marginBottom: 22,
+  },
+  tipTitle: { color: Colors.primary, fontSize: 13, fontWeight: '700', textAlign: 'center' },
+  tipText: { color: Colors.textSecondary, fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 4 },
   startBtn: { backgroundColor: Colors.primary, paddingHorizontal: 48, paddingVertical: 16, borderRadius: 14 },
   startBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-
   overlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
   scanFrame: {
     width: 240,
@@ -221,26 +231,20 @@ const styles = StyleSheet.create({
   loadingOverlay: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000000aa' },
   cancelScanBtn: { position: 'absolute', top: 56, right: 20, backgroundColor: '#00000088', borderRadius: 20, padding: 10 },
   cancelScanText: { color: '#fff', fontWeight: '700' },
-
   resultHeader: { alignItems: 'center', marginBottom: 28 },
   resultIcon: { fontSize: 52, marginBottom: 8 },
   resultTitle: { fontSize: 24, fontWeight: '800', color: Colors.textPrimary },
   resultSubtitle: { color: Colors.textSecondary, fontSize: 13, marginTop: 4, textAlign: 'center' },
-
   section: { marginBottom: 20 },
   sectionTitle: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 8 },
   sectionCard: { backgroundColor: Colors.bgCard, borderRadius: 14, borderWidth: 1, borderColor: Colors.border, overflow: 'hidden' },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: Colors.border },
   rowLabel: { color: Colors.textSecondary, fontSize: 13, flex: 1 },
   rowValue: { color: Colors.textPrimary, fontSize: 13, fontWeight: '600', flex: 2, textAlign: 'right' },
-
   scanAgainBtn: { backgroundColor: Colors.primary, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 12 },
   scanAgainText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-
-  chainBanner: {
-    flexDirection: 'row', alignItems: 'center', padding: 14,
-    borderRadius: 14, borderWidth: 1, marginBottom: 20,
-  },
+  chainBanner: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 14, borderWidth: 1, marginBottom: 20 },
+  chainIcon: { fontSize: 24, marginRight: 10 },
   chainTitle: { fontSize: 15, fontWeight: '700' },
   chainSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
 });

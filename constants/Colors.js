@@ -1,27 +1,27 @@
-// App color palette — KrishiTrace brand
+// Shared farmer-friendly palette aligned with the home dashboard.
 export const Colors = {
   // Backgrounds
-  bg:        '#0a1628',
-  bgCard:    '#111e35',
-  bgInput:   '#162040',
+  bg: '#e7f1df',
+  bgCard: '#f8fbf5',
+  bgInput: '#edf5e7',
 
   // Accent
-  primary:   '#22c55e',   // Green — agriculture
-  primaryDim:'#16a34a',
-  gold:      '#f59e0b',   // Harvest gold
-  blue:      '#3b82f6',
+  primary: '#2f9d62',
+  primaryDim: '#257a4c',
+  gold: '#f49a27',
+  blue: '#4a87d9',
 
   // Text
-  textPrimary:   '#f1f5f9',
-  textSecondary: '#94a3b8',
-  textMuted:     '#475569',
+  textPrimary: '#203120',
+  textSecondary: '#667462',
+  textMuted: '#7b8978',
 
   // Status
-  success: '#22c55e',
-  warning: '#f59e0b',
-  error:   '#ef4444',
-  info:    '#3b82f6',
+  success: '#2f9d62',
+  warning: '#d28b1d',
+  error: '#c45151',
+  info: '#4a87d9',
 
   // Border
-  border:  '#1e2d4a',
+  border: '#d7e5cf',
 };

@@ -25,13 +25,12 @@ const PriceCard = ({ item }) => {
     const mockFriends = [
       { name: 'Ramesh R.', emoji: '🧑🏽‍🌾', price: Math.round(basePrice * 0.98), time: '1 hr ago' },
       { name: 'Srinivas R.', emoji: '👨🏽‍🌾', price: Math.round(basePrice * 1.05), time: '3 hrs ago' },
-      { name: 'Kavitha M.',   emoji: '👩🏽‍🌾', price: Math.round(basePrice * 1.02), time: '5 hrs ago' },
-      { name: 'Abdul K.',   emoji: '🧔🏽‍♂️', price: Math.round(basePrice * 0.95), time: 'Yesterday' },
-      { name: 'Farmer J.',  emoji: '👨🏼‍🌾', price: Math.round(basePrice * 1.01), time: '2 hrs ago' }
+      { name: 'Kavitha M.', emoji: '👩🏽‍🌾', price: Math.round(basePrice * 1.02), time: '5 hrs ago' },
+      { name: 'Abdul K.', emoji: '🧔🏽', price: Math.round(basePrice * 0.95), time: 'Yesterday' },
+      { name: 'Farmer J.', emoji: '👨🏼‍🌾', price: Math.round(basePrice * 1.01), time: '2 hrs ago' },
     ];
-    // Seed shuffle based on crop length so it's pseudo-stable
     const offset = cropName.length;
-    return mockFriends.sort((a, b) => (a.name.charCodeAt(0) + offset) % 2 === 0 ? 1 : -1).slice(0, 3);
+    return mockFriends.sort((a, b) => ((a.name.charCodeAt(0) + offset) % 2 === 0 ? 1 : -1)).slice(0, 3);
   }, [basePrice, cropName]);
 
   return (
@@ -49,17 +48,16 @@ const PriceCard = ({ item }) => {
           </Text>
         </View>
       </View>
-      
-      {/* Neighboring Farmers Section */}
+
       <View style={styles.insightSection}>
-        <Text style={styles.insightTitle}>🤝 NEIGHBORING FARMERS</Text>
+        <Text style={styles.insightTitle}>NEIGHBORING FARMERS</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.insightScroll}>
-          {friendSales.map((p, i) => (
-            <View key={i} style={styles.insightTag}>
-              <Text style={styles.insightEmoji}>{p.emoji}</Text>
+          {friendSales.map((sale, index) => (
+            <View key={index} style={styles.insightTag}>
+              <Text style={styles.insightEmoji}>{sale.emoji}</Text>
               <View>
-                <Text style={styles.insightName}>{p.name}</Text>
-                <Text style={styles.insightPrice}>₹{p.price}/kg <Text style={styles.insightTime}>· {p.time}</Text></Text>
+                <Text style={styles.insightName}>{sale.name}</Text>
+                <Text style={styles.insightPrice}>₹{sale.price}/kg <Text style={styles.insightTime}>· {sale.time}</Text></Text>
               </View>
             </View>
           ))}
@@ -70,7 +68,7 @@ const PriceCard = ({ item }) => {
 };
 
 export default function MarketScreen() {
-  const [prices, setPrices]   = useState([]);
+  const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -86,7 +84,6 @@ export default function MarketScreen() {
         throw new Error('Empty array');
       }
     } catch (_) {
-      // Offline / API unavailable fallback data
       setPrices([
         { _id: '1', cropType: 'Tomato', location: 'Local Mandi', pricePerKg: 32, change: 2.5 },
         { _id: '2', cropType: 'Onion', location: 'City Market', pricePerKg: 45, change: -1.2 },
@@ -108,29 +105,26 @@ export default function MarketScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>📈 Market Prices</Text>
-        <Text style={styles.subtitle}>Live mandi rates</Text>
+        <Text style={styles.eyebrow}>Mandi update</Text>
+        <Text style={styles.title}>Market Prices</Text>
+        <Text style={styles.subtitle}>Live crop rates in a simple farmer-friendly view.</Text>
       </View>
 
-      {/* Summary banner */}
       <View style={styles.banner}>
-        <Text style={styles.bannerText}>
-          🌾 {prices.length} crops tracked · Updated just now
-        </Text>
+        <Text style={styles.bannerText}>🌾 {prices.length} crops tracked · Updated just now</Text>
       </View>
 
       <FlatList
         data={prices}
-        keyExtractor={(item, i) => item._id || String(i)}
+        keyExtractor={(item, index) => item._id || String(index)}
         renderItem={({ item }) => <PriceCard item={item} />}
-        ListEmptyComponent={
+        ListEmptyComponent={(
           <View style={styles.empty}>
-            <Text style={{ fontSize: 48 }}>📊</Text>
+            <Text style={styles.emptyIcon}>📊</Text>
             <Text style={styles.emptyText}>No market data available yet.</Text>
           </View>
-        }
+        )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={load} tintColor={Colors.primary} />}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
       />
@@ -140,41 +134,46 @@ export default function MarketScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.bg },
-  center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg },
-
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.bg },
   header: {
-    paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    paddingHorizontal: 16,
+    paddingTop: 56,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  title:    { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
+  eyebrow: { color: Colors.primary, fontSize: 13, fontWeight: '700', marginBottom: 6 },
+  title: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
   subtitle: { color: Colors.textSecondary, fontSize: 13, marginTop: 2 },
-
   banner: {
-    margin: 16, backgroundColor: Colors.primary + '22',
-    borderRadius: 12, paddingHorizontal: 16, paddingVertical: 10,
-    borderWidth: 1, borderColor: Colors.primary + '44',
+    margin: 16,
+    backgroundColor: '#fff3de',
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#f2d3a0',
   },
-  bannerText: { color: Colors.primary, fontSize: 13, fontWeight: '600' },
-
+  bannerText: { color: '#9a6517', fontSize: 13, fontWeight: '700' },
   card: {
-    backgroundColor: Colors.bgCard, borderRadius: 16, padding: 16,
-    marginBottom: 12, borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.bgCard,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  cardHeaderRow: {
-    flexDirection: 'row', alignItems: 'center',
-  },
-  cropIcon:   { fontSize: 36, marginRight: 14 },
+  cardHeaderRow: { flexDirection: 'row', alignItems: 'center' },
+  cropIcon: { fontSize: 36, marginRight: 14 },
   cardMiddle: { flex: 1 },
-  cropName:   { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
-  location:   { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
-
+  cropName: { color: Colors.textPrimary, fontSize: 16, fontWeight: '700' },
+  location: { color: Colors.textSecondary, fontSize: 12, marginTop: 2 },
   priceRight: { alignItems: 'flex-end' },
-  price:      { color: Colors.gold, fontSize: 16, fontWeight: '800' },
-  change:     { fontSize: 13, fontWeight: '600', marginTop: 2 },
-
-  empty:     { alignItems: 'center', paddingTop: 80 },
+  price: { color: Colors.gold, fontSize: 16, fontWeight: '800' },
+  change: { fontSize: 13, fontWeight: '600', marginTop: 2 },
+  empty: { alignItems: 'center', paddingTop: 80 },
+  emptyIcon: { fontSize: 48 },
   emptyText: { color: Colors.textSecondary, fontSize: 16, marginTop: 12 },
-
   insightSection: {
     marginTop: 16,
     paddingTop: 12,
@@ -186,12 +185,12 @@ const styles = StyleSheet.create({
   insightTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primary + '0a',
+    backgroundColor: Colors.primary + '10',
     borderWidth: 1,
     borderColor: Colors.primary + '20',
     paddingVertical: 6,
     paddingHorizontal: 10,
-    borderRadius: 10,
+    borderRadius: 12,
   },
   insightEmoji: { fontSize: 16, marginRight: 8 },
   insightName: { color: Colors.textPrimary, fontSize: 11, fontWeight: '600' },

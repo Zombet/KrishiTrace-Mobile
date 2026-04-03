@@ -40,12 +40,12 @@ const statusColor = (s) => {
   return Colors.blue;
 };
 
-const MarketInsights = ({ crop, prices, loading }) => {
+const MarketInsights = ({ crop, prices, loading, text }) => {
   if (!crop) return null;
   return (
     <View style={styles.insightsContainer}>
-      <Text style={styles.insightsTitle}>🤝 Market Insights</Text>
-      <Text style={styles.insightsSubtitle}>Recent local sales of {crop} by Friend Farmers</Text>
+      <Text style={styles.insightsTitle}>🤝 {text.marketInsights}</Text>
+      <Text style={styles.insightsSubtitle}>{text.recentSales.replace('{{crop}}', crop)}</Text>
       {loading ? (
         <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 12, marginBottom: 8 }} />
       ) : prices.length > 0 ? (
@@ -62,35 +62,156 @@ const MarketInsights = ({ crop, prices, loading }) => {
           ))}
         </ScrollView>
       ) : (
-        <Text style={[styles.insightsSubtitle, { marginTop: 12 }]}>No recent community sales found.</Text>
+        <Text style={[styles.insightsSubtitle, { marginTop: 12 }]}>{text.noSales}</Text>
       )}
     </View>
   );
 };
 
-const HarvestCard = ({ item }) => (
+const HarvestCard = ({ item, text }) => (
   <View style={styles.card}>
     <View style={styles.cardHeader}>
-      <Text style={styles.cropName}>{item.cropType || 'Crop'}</Text>
+      <Text style={styles.cropName}>{item.cropType || text.cropFallback}</Text>
       <View style={[styles.badge, { backgroundColor: statusColor(item.status) + '22' }]}>
         <Text style={[styles.badgeText, { color: statusColor(item.status) }]}>
-          {item.fairPriceCompliant === true ? '✅ Compliant' :
-           item.fairPriceCompliant === false ? '⚠️ Violation' :
-           item.status || 'Recorded'}
+          {item.fairPriceCompliant === true ? `✅ ${text.compliant}` :
+           item.fairPriceCompliant === false ? `⚠️ ${text.violation}` :
+           item.status || text.recorded}
         </Text>
       </View>
     </View>
-    <Text style={styles.meta}>📍 {item.farmAddress || item.location || 'Location not set'}</Text>
+    <Text style={styles.meta}>📍 {item.farmAddress || item.location || text.locationNotSet}</Text>
     <Text style={styles.meta}>⚖️  {item.quantity} {item.unit || 'kg'}</Text>
     {item.payoutBreakdown?.farmerPayout && (
-      <Text style={styles.meta}>💰 ₹{item.payoutBreakdown.farmerPayout}/kg farmer payout</Text>
+      <Text style={styles.meta}>💰 ₹{item.payoutBreakdown.farmerPayout}/kg {text.farmerPayout}</Text>
     )}
     <Text style={styles.meta}>📅 {item.harvestDate ? new Date(item.harvestDate).toDateString() : '—'}</Text>
   </View>
 );
 
 export default function HarvestScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const langCode = (i18n.language || 'en').split('-')[0];
+  const lang = ['hi', 'te'].includes(langCode) ? langCode : 'en';
+  const text = {
+    en: {
+      marketInsights: 'Market Insights',
+      recentSales: 'Recent local sales of {{crop}} by friend farmers',
+      noSales: 'No recent community sales found.',
+      cropFallback: 'Crop',
+      compliant: 'Compliant',
+      violation: 'Violation',
+      recorded: 'Recorded',
+      locationNotSet: 'Location not set',
+      farmerPayout: 'farmer payout',
+      emptyHelp: 'Tap AI Assist to log with AI or Add Batch to fill manually.',
+      aiInputTitle: 'AI Assist Input',
+      aiInputSubtitle: 'For this demo, type what you would say so the AI can parse harvest details.',
+      recognizedLanguage: 'Recognized Language Context',
+      examplePhrase: 'Example phrase:',
+      yourSpeech: 'Your speech (type here)',
+      cancel: 'Cancel',
+      parseWithAi: 'Parse with AI',
+      addBatchTitle: 'Add Batch',
+      locationPlaceholder: 'e.g. Kurnool, AP',
+      quantityPlaceholder: '500',
+      payoutPlaceholder: 'e.g. 30',
+      consumerPlaceholder: 'e.g. 55',
+      transportPlaceholder: 'e.g. 5',
+      emptyTranscriptTitle: 'Empty Transcript',
+      emptyTranscriptMsg: 'Please type what you would say.',
+      parsedTitle: 'AI Parsed',
+      parsedMsg: 'Extracted: {{crop}} {{qty}} {{unit}}. Review and submit.',
+      parseError: 'Parse Error',
+      parseFallback: 'Could not parse. Please fill manually.',
+      missingFieldsTitle: 'Missing Fields',
+      missingFieldsMsg: 'Crop, quantity, farmer payout and consumer price are required.',
+      minedTitle: 'Block Mined',
+      minedMsg: 'Block #{{index}} added to chain\nHash: {{hash}}...\nTotal blocks: {{count}}',
+      errorTitle: 'Error',
+      mineFailed: 'Failed to mine block:',
+      miningTitle: 'Mining Block...',
+      miningSubtitle: 'Computing SHA-256 hash',
+    },
+    hi: {
+      marketInsights: '\u092c\u093e\u091c\u093c\u093e\u0930 \u091d\u0932\u0915',
+      recentSales: '\u092e\u093f\u0924\u094d\u0930 \u0915\u093f\u0938\u093e\u0928\u094b\u0902 \u0915\u0940 {{crop}} \u0915\u0940 \u0939\u093e\u0932 \u0915\u0940 \u0938\u094d\u0925\u093e\u0928\u0940\u092f \u092c\u093f\u0915\u094d\u0930\u0940',
+      noSales: '\u0915\u094b\u0908 \u0939\u093e\u0932 \u0915\u0940 \u0938\u092e\u0941\u0926\u093e\u092f \u092c\u093f\u0915\u094d\u0930\u0940 \u0928\u0939\u0940\u0902 \u092e\u093f\u0932\u0940\u0964',
+      cropFallback: '\u092b\u0938\u0932',
+      compliant: '\u0905\u0928\u0941\u092a\u093e\u0932\u093f\u0924',
+      violation: '\u0909\u0932\u094d\u0932\u0902\u0918\u0928',
+      recorded: '\u0926\u0930\u094d\u091c',
+      locationNotSet: '\u0938\u094d\u0925\u093e\u0928 \u0938\u0947\u091f \u0928\u0939\u0940\u0902',
+      farmerPayout: '\u0915\u093f\u0938\u093e\u0928 \u092d\u0941\u0917\u0924\u093e\u0928',
+      emptyHelp: 'AI \u0938\u0939\u093e\u092f\u0924\u093e \u0938\u0947 \u0932\u0949\u0917 \u0915\u0930\u0947\u0902 \u092f\u093e Add Batch \u0924\u094b \u0939\u093e\u0925 \u0938\u0947 \u092d\u0930\u0947\u0902\u0964',
+      aiInputTitle: 'AI \u0938\u0939\u093e\u092f\u0924\u093e \u0907\u0928\u092a\u0941\u091f',
+      aiInputSubtitle: '\u0907\u0938 \u0921\u0947\u092e\u094b \u092e\u0947\u0902 \u0906\u092a \u091c\u094b \u092c\u094b\u0932\u0924\u0947 \u0939\u0948\u0902 \u0935\u0939 \u091f\u093e\u0907\u092a \u0915\u0930\u0947\u0902.',
+      recognizedLanguage: '\u092a\u0939\u091a\u093e\u0928\u0940 \u0917\u0908 \u092d\u093e\u0937\u093e',
+      examplePhrase: '\u0909\u0926\u093e\u0939\u0930\u0923 \u0935\u093e\u0915\u094d\u092f:',
+      yourSpeech: '\u0906\u092a\u0915\u093e \u0915\u0939\u093e \u0939\u0941\u0906 \u0935\u093e\u0915\u094d\u092f',
+      cancel: '\u0930\u0926\u094d\u0926 \u0915\u0930\u0947\u0902',
+      parseWithAi: 'AI \u0938\u0947 \u092a\u093e\u0930\u094d\u0938 \u0915\u0930\u0947\u0902',
+      addBatchTitle: '\u092c\u0948\u091a \u091c\u094b\u095c\u0947\u0902',
+      locationPlaceholder: '\u0909\u0926\u093e\u0939\u0930\u0923: Kurnool, AP',
+      quantityPlaceholder: '500',
+      payoutPlaceholder: '\u0909\u0926\u093e\u0939\u0930\u0923: 30',
+      consumerPlaceholder: '\u0909\u0926\u093e\u0939\u0930\u0923: 55',
+      transportPlaceholder: '\u0909\u0926\u093e\u0939\u0930\u0923: 5',
+      emptyTranscriptTitle: '\u0916\u093e\u0932\u0940 \u091f\u094d\u0930\u093e\u0928\u094d\u0938\u0915\u094d\u0930\u093f\u092a\u094d\u091f',
+      emptyTranscriptMsg: '\u0915\u0943\u092a\u092f\u093e \u091c\u094b \u0906\u092a \u092c\u094b\u0932\u0924\u0947 \u0939\u0948\u0902 \u0935\u0939 \u091f\u093e\u0907\u092a \u0915\u0930\u0947\u0902\u0964',
+      parsedTitle: 'AI \u0928\u0947 \u0938\u092e\u091d\u093e',
+      parsedMsg: '\u0928\u093f\u0915\u0932\u093e: {{crop}} {{qty}} {{unit}}. \u091c\u093e\u0901\u091a\u0915\u0930 \u0938\u092c\u092e\u093f\u091f \u0915\u0930\u0947\u0902\u0964',
+      parseError: '\u092a\u093e\u0930\u094d\u0938 \u0917\u0932\u0924\u0940',
+      parseFallback: '\u0938\u092e\u091d \u0928\u0939\u0940\u0902 \u0938\u0915\u093e. \u0915\u0943\u092a\u092f\u093e \u0939\u093e\u0925 \u0938\u0947 \u092d\u0930\u0947\u0902\u0964',
+      missingFieldsTitle: '\u091c\u0930\u0942\u0930\u0940 \u092b\u0940\u0932\u094d\u0921 \u0915\u092e \u0939\u0948\u0902',
+      missingFieldsMsg: '\u092b\u0938\u0932, \u092e\u093e\u0924\u094d\u0930\u093e, \u0915\u093f\u0938\u093e\u0928 \u092d\u0941\u0917\u0924\u093e\u0928 \u0914\u0930 \u0917\u094d\u0930\u093e\u0939\u0915 \u092e\u0942\u0932\u094d\u092f \u091c\u0930\u0942\u0930\u0940 \u0939\u0948\u0902\u0964',
+      minedTitle: '\u092c\u094d\u0932\u0949\u0915 \u092e\u093e\u0907\u0928 \u0939\u094b \u0917\u092f\u093e',
+      minedMsg: '\u092c\u094d\u0932\u0949\u0915 #{{index}} \u091a\u0947\u0928 \u092e\u0947\u0902 \u091c\u094b\u095c\u093e \u0917\u092f\u093e\nHash: {{hash}}...\n\u0915\u0941\u0932 \u092c\u094d\u0932\u0949\u0915: {{count}}',
+      errorTitle: '\u0924\u094d\u0930\u0941\u091f\u093f',
+      mineFailed: '\u092c\u094d\u0932\u0949\u0915 \u092e\u093e\u0907\u0928 \u0928\u0939\u0940\u0902 \u0939\u0941\u0906:',
+      miningTitle: '\u092c\u094d\u0932\u0949\u0915 \u092e\u093e\u0907\u0928 \u0939\u094b \u0930\u0939\u093e \u0939\u0948...',
+      miningSubtitle: 'SHA-256 hash \u0917\u0923\u0928\u093e \u0915\u0930 \u0930\u0939\u093e \u0939\u0948',
+    },
+    te: {
+      marketInsights: '\u0c2e\u0c3e\u0c30\u0c4d\u0c15\u0c46\u0c1f\u0c4d \u0c07\u0c28\u0c4d\u0c38\u0c48\u0c1f\u0c4d\u0c38\u0c4d',
+      recentSales: '\u0c2e\u0c3f\u0c24\u0c4d\u0c30 \u0c30\u0c48\u0c24\u0c41\u0c32\u0c35\u0c26\u0c4d\u0c26 {{crop}} \u0c39\u0c3e\u0c32\u0c40 \u0c05\u0c2e\u0c4d\u0c2e\u0c15\u0c3e\u0c32\u0c41',
+      noSales: '\u0c39\u0c3e\u0c32\u0c40 \u0c38\u0c2e\u0c41\u0c26\u0c3e\u0c2f \u0c05\u0c2e\u0c4d\u0c2e\u0c15\u0c3e\u0c32\u0c41 \u0c15\u0c28\u0c3f\u0c2a\u0c3f\u0c02\u0c1a\u0c32\u0c47\u0c26\u0c41.',
+      cropFallback: '\u0c2a\u0c02\u0c1f',
+      compliant: '\u0c05\u0c28\u0c41\u0c15\u0c42\u0c32\u0c02',
+      violation: '\u0c09\u0c32\u0c4d\u0c32\u0c02\u0c18\u0c28',
+      recorded: '\u0c30\u0c3f\u0c15\u0c3e\u0c30\u0c4d\u0c21\u0c4d \u0c05\u0c2f\u0c3f\u0c02\u0c26\u0c3f',
+      locationNotSet: '\u0c38\u0c4d\u0c25\u0c3e\u0c28\u0c02 \u0c38\u0c46\u0c1f\u0c4d \u0c1a\u0c47\u0c2f\u0c32\u0c47\u0c26\u0c41',
+      farmerPayout: '\u0c30\u0c48\u0c24\u0c41 \u0c1a\u0c46\u0c32\u0c4d\u0c32\u0c3f\u0c02\u0c2a\u0c41',
+      emptyHelp: 'AI \u0c38\u0c39\u0c3e\u0c2f\u0c02\u0c24\u0c4b \u0c32\u0c3e\u0c17\u0c4d \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f \u0c32\u0c47\u0c26\u0c3e Add Batch \u0c24\u0c4b \u0c1a\u0c47\u0c24\u0c3f\u0c24\u0c4b \u0c2d\u0c30\u0c02\u0c21\u0c3f.',
+      aiInputTitle: 'AI \u0c38\u0c39\u0c3e\u0c2f \u0c07\u0c28\u0c4d\u0c2a\u0c41\u0c1f\u0c4d',
+      aiInputSubtitle: '\u0c08 \u0c21\u0c46\u0c2e\u0c4b\u0c32\u0c4b \u0c2e\u0c40\u0c30\u0c41 \u0c1a\u0c46\u0c2a\u0c4d\u0c2a\u0c47\u0c26\u0c3f \u0c1f\u0c48\u0c2a\u0c4d \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f.',
+      recognizedLanguage: '\u0c17\u0c41\u0c30\u0c4d\u0c24\u0c3f\u0c02\u0c1a\u0c3f\u0c28 \u0c2d\u0c3e\u0c37',
+      examplePhrase: '\u0c09\u0c26\u0c3e\u0c39\u0c30\u0c23 \u0c35\u0c3e\u0c15\u0c4d\u0c2f\u0c02:',
+      yourSpeech: '\u0c2e\u0c40 \u0c2e\u0c3e\u0c1f',
+      cancel: '\u0c30\u0c26\u0c4d\u0c26\u0c41',
+      parseWithAi: 'AI \u0c24\u0c4b \u0c2a\u0c3e\u0c30\u0c4d\u0c38\u0c4d \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f',
+      addBatchTitle: '\u0c2c\u0c4d\u0c2f\u0c3e\u0c1a\u0c4d \u0c1c\u0c4b\u0c21\u0c3f\u0c02\u0c1a\u0c02\u0c21\u0c3f',
+      locationPlaceholder: '\u0c09\u0c26\u0c3e: Kurnool, AP',
+      quantityPlaceholder: '500',
+      payoutPlaceholder: '\u0c09\u0c26\u0c3e: 30',
+      consumerPlaceholder: '\u0c09\u0c26\u0c3e: 55',
+      transportPlaceholder: '\u0c09\u0c26\u0c3e: 5',
+      emptyTranscriptTitle: '\u0c16\u0c3e\u0c33\u0c40 \u0c1f\u0c4d\u0c30\u0c3e\u0c28\u0c4d\u0c38\u0c4d\u0c15\u0c4d\u0c30\u0c3f\u0c2a\u0c4d\u0c1f\u0c4d',
+      emptyTranscriptMsg: '\u0c2e\u0c40\u0c30\u0c41 \u0c1a\u0c46\u0c2a\u0c4d\u0c2a\u0c47\u0c26\u0c3f \u0c1f\u0c48\u0c2a\u0c4d \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f.',
+      parsedTitle: 'AI \u0c35\u0c3f\u0c36\u0c4d\u0c32\u0c47\u0c37\u0c3f\u0c02\u0c1a\u0c3f\u0c02\u0c26\u0c3f',
+      parsedMsg: '\u0c24\u0c40\u0c38\u0c3f\u0c28\u0c26\u0c3f: {{crop}} {{qty}} {{unit}}. \u0c1a\u0c42\u0c38\u0c3f \u0c38\u0c2c\u0c4d\u0c2e\u0c3f\u0c1f\u0c4d \u0c1a\u0c47\u0c2f\u0c02\u0c21\u0c3f.',
+      parseError: '\u0c2a\u0c3e\u0c30\u0c4d\u0c38\u0c4d \u0c24\u0c2a\u0c4d\u0c2a\u0c3f\u0c02\u0c26\u0c3f',
+      parseFallback: '\u0c2a\u0c3e\u0c30\u0c4d\u0c38\u0c4d \u0c1a\u0c47\u0c2f\u0c32\u0c47\u0c15\u0c2a\u0c4b\u0c2f\u0c3e\u0c2e\u0c41.',
+      missingFieldsTitle: '\u0c24\u0c2a\u0c4d\u0c2a\u0c28\u0c3f\u0c38\u0c30\u0c3f \u0c2b\u0c40\u0c32\u0c4d\u0c21\u0c4d\u0c32\u0c41',
+      missingFieldsMsg: '\u0c2a\u0c02\u0c1f, \u0c2a\u0c30\u0c3f\u0c2e\u0c3e\u0c23\u0c02, \u0c30\u0c48\u0c24\u0c41 \u0c1a\u0c46\u0c32\u0c4d\u0c32\u0c3f\u0c02\u0c2a\u0c41 \u0c2e\u0c30\u0c3f\u0c2f\u0c41 \u0c35\u0c3f\u0c28\u0c3f\u0c2f\u0c4b\u0c17\u0c26\u0c3e\u0c30\u0c41 \u0c27\u0c30 \u0c15\u0c3e\u0c35\u0c3e\u0c32\u0c3f.',
+      minedTitle: '\u0c2c\u0c4d\u0c32\u0c3e\u0c15\u0c4d \u0c2e\u0c48\u0c28\u0c4d \u0c05\u0c2f\u0c4d\u0c2f\u0c3f\u0c02\u0c26\u0c3f',
+      minedMsg: '\u0c2c\u0c4d\u0c32\u0c3e\u0c15\u0c4d #{{index}} \u0c1a\u0c48\u0c28\u0c4d\u0c15\u0c3f \u0c1c\u0c4b\u0c21\u0c3f\u0c02\u0c1a\u0c2c\u0c21\u0c3f\u0c02\u0c26\u0c3f\nHash: {{hash}}...\n\u0c2e\u0c4a\u0c24\u0c4d\u0c24\u0c02 \u0c2c\u0c4d\u0c32\u0c3e\u0c15\u0c4d\u0c32\u0c41: {{count}}',
+      errorTitle: '\u0c24\u0c2a\u0c4d\u0c2a\u0c3f\u0c02\u0c26\u0c3f',
+      mineFailed: '\u0c2c\u0c4d\u0c32\u0c3e\u0c15\u0c4d \u0c2e\u0c48\u0c28\u0c4d \u0c1a\u0c47\u0c2f\u0c32\u0c47\u0c15\u0c2a\u0c4b\u0c2f\u0c3e\u0c2e\u0c41:',
+      miningTitle: '\u0c2c\u0c4d\u0c32\u0c3e\u0c15\u0c4d \u0c2e\u0c48\u0c28\u0c4d \u0c05\u0c35\u0c41\u0c24\u0c4b\u0c02\u0c26\u0c3f...',
+      miningSubtitle: 'SHA-256 hash \u0c17\u0c23\u0c3f\u0c02\u0c1a\u0c2c\u0c21\u0c41\u0c24\u0c4b\u0c02\u0c26\u0c3f',
+    },
+  }[lang] || null;
   const [harvests, setHarvests]     = useState([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -178,7 +299,7 @@ export default function HarvestScreen() {
 
   const handleVoiceSubmit = async () => {
     if (!transcript.trim()) {
-      Alert.alert('Empty Transcript', 'Please type what you would say.');
+      Alert.alert(text.emptyTranscriptTitle, text.emptyTranscriptMsg);
       return;
     }
     setParsing(true);
@@ -200,9 +321,15 @@ export default function HarvestScreen() {
       setVoiceModal(false);
       setTranscript('');
       setModal(true);
-      Alert.alert('✅ AI Parsed!', `Extracted: ${p.cropType || ''} ${p.quantity || ''} ${p.unit || ''}. Review and submit.`);
+      Alert.alert(
+        text.parsedTitle,
+        text.parsedMsg
+          .replace('{{crop}}', p.cropType || '')
+          .replace('{{qty}}', p.quantity || '')
+          .replace('{{unit}}', p.unit || '')
+      );
     } catch (err) {
-      Alert.alert('Parse Error', err?.response?.data?.message || 'Could not parse. Please fill manually.');
+      Alert.alert(text.parseError, err?.response?.data?.message || text.parseFallback);
     } finally {
       setParsing(false);
     }
@@ -234,7 +361,7 @@ export default function HarvestScreen() {
 
   const handleAdd = async () => {
     if (!form.cropType || !form.quantity || !form.farmerPayout || !form.finalConsumerPrice) {
-      Alert.alert('Missing Fields', 'Crop, quantity, farmer payout and consumer price are required.');
+      Alert.alert(text.missingFieldsTitle, text.missingFieldsMsg);
       return;
     }
     setSubmitting(true);
@@ -279,12 +406,15 @@ export default function HarvestScreen() {
       setForm({ cropType: '', location: '', quantity: '', unit: 'kg', farmerPayout: '', finalConsumerPrice: '', transportCost: '', notes: '' });
 
       Alert.alert(
-        '⛏️ Block Mined!',
-        `Block #${block.index} added to chain\nHash: ${block.hash.slice(0, 16)}...\nTotal blocks: ${chainLength}`
+        text.minedTitle,
+        text.minedMsg
+          .replace('{{index}}', String(block.index))
+          .replace('{{hash}}', block.hash.slice(0, 16))
+          .replace('{{count}}', String(chainLength))
       );
     } catch (err) {
       hideMiningAnimation(interval);
-      Alert.alert('Error', 'Failed to mine block: ' + (err?.message || 'Unknown error'));
+      Alert.alert(text.errorTitle, `${text.mineFailed} ${err?.message || 'Unknown error'}`);
     } finally {
       setSubmitting(false);
     }
@@ -310,12 +440,12 @@ export default function HarvestScreen() {
       <FlatList
         data={harvests}
         keyExtractor={(item, i) => item._id || String(i)}
-        renderItem={({ item }) => <HarvestCard item={item} />}
+        renderItem={({ item }) => <HarvestCard item={item} text={text} />}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🌱</Text>
             <Text style={styles.emptyText}>{t('harvest.empty')}</Text>
-            <Text style={styles.emptySubText}>Tap 🎙 AI Assist to log with AI or + Add to fill manually.</Text>
+            <Text style={styles.emptySubText}>{text.emptyHelp}</Text>
           </View>
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={Colors.primary} />}
@@ -326,13 +456,11 @@ export default function HarvestScreen() {
       <Modal visible={voiceModal} animationType="slide" transparent onRequestClose={() => { setVoiceModal(false); stopPulse(); }}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>🤖 AI Assist Input</Text>
-            <Text style={styles.modalSubtitle}>
-              Native voice recording is highly device dependent. For this demo, please type what you would say natively to see how the AI parses it!
-            </Text>
+            <Text style={styles.modalTitle}>🤖 {text.aiInputTitle}</Text>
+            <Text style={styles.modalSubtitle}>{text.aiInputSubtitle}</Text>
 
             {/* Language Selector */}
-            <Text style={styles.label}>Recognized Language Context</Text>
+            <Text style={styles.label}>{text.recognizedLanguage}</Text>
             <View style={styles.langRow}>
               {LANGUAGES.map((l) => (
                 <TouchableOpacity
@@ -350,12 +478,12 @@ export default function HarvestScreen() {
 
             {/* Hint */}
             <View style={styles.hintBox}>
-              <Text style={styles.hintLabel}>Example phrase:</Text>
+              <Text style={styles.hintLabel}>{text.examplePhrase}</Text>
               <Text style={styles.hintText}>{VOICE_HINTS[voiceLang]}</Text>
             </View>
 
             {/* Transcript Input */}
-            <Text style={styles.label}>Your speech (type here)</Text>
+            <Text style={styles.label}>{text.yourSpeech}</Text>
             <TextInput
               style={[styles.input, { height: 90 }]}
               placeholder={VOICE_HINTS[voiceLang]}
@@ -367,12 +495,12 @@ export default function HarvestScreen() {
 
             <View style={styles.modalBtns}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => { setVoiceModal(false); stopPulse(); setTranscript(''); }}>
-                <Text style={{ color: Colors.textSecondary, fontWeight: '600' }}>Cancel</Text>
+                <Text style={{ color: Colors.textSecondary, fontWeight: '600' }}>{text.cancel}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.submitBtn} onPress={handleVoiceSubmit} disabled={parsing}>
                 {parsing
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={styles.submitBtnText}>🤖 Parse with AI</Text>
+                  : <Text style={styles.submitBtnText}>🤖 {text.parseWithAi}</Text>
                 }
               </TouchableOpacity>
             </View>
@@ -385,7 +513,7 @@ export default function HarvestScreen() {
         <View style={styles.modalOverlay}>
           <ScrollView>
             <View style={[styles.modalSheet, { marginTop: 60 }]}>
-              <Text style={styles.modalTitle}>{t('harvest.add')} Batch</Text>
+              <Text style={styles.modalTitle}>{text.addBatchTitle}</Text>
 
               <Text style={styles.label}>{t('harvest.crop')} {pricesLoading && <ActivityIndicator size="small" color={Colors.primary} style={{marginLeft: 8}} />}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
@@ -402,16 +530,16 @@ export default function HarvestScreen() {
                 </View>
               </ScrollView>
 
-              <MarketInsights crop={form.cropType} prices={friendPrices} loading={pricesLoading} />
+              <MarketInsights crop={form.cropType} prices={friendPrices} loading={pricesLoading} text={text} />
 
               <Text style={styles.label}>{t('harvest.location')}</Text>
-              <TextInput style={styles.input} placeholder="e.g. Kurnool, AP" placeholderTextColor={Colors.textMuted}
+              <TextInput style={styles.input} placeholder={text.locationPlaceholder} placeholderTextColor={Colors.textMuted}
                 value={form.location} onChangeText={set('location')} />
 
               <View style={styles.row}>
                 <View style={{ flex: 2 }}>
                   <Text style={styles.label}>{t('harvest.quantity')}</Text>
-                  <TextInput style={styles.input} placeholder="500" placeholderTextColor={Colors.textMuted}
+                  <TextInput style={styles.input} placeholder={text.quantityPlaceholder} placeholderTextColor={Colors.textMuted}
                     value={form.quantity} onChangeText={set('quantity')} keyboardType="numeric" />
                 </View>
                 <View style={{ flex: 1, marginLeft: 8 }}>
@@ -426,20 +554,20 @@ export default function HarvestScreen() {
               </View>
 
               <Text style={styles.label}>{t('harvest.payout')} *</Text>
-              <TextInput style={styles.input} placeholder="e.g. 30" placeholderTextColor={Colors.textMuted}
+              <TextInput style={styles.input} placeholder={text.payoutPlaceholder} placeholderTextColor={Colors.textMuted}
                 value={form.farmerPayout} onChangeText={set('farmerPayout')} keyboardType="numeric" />
 
               <Text style={styles.label}>{t('harvest.consumer_price')} *</Text>
-              <TextInput style={styles.input} placeholder="e.g. 55" placeholderTextColor={Colors.textMuted}
+              <TextInput style={styles.input} placeholder={text.consumerPlaceholder} placeholderTextColor={Colors.textMuted}
                 value={form.finalConsumerPrice} onChangeText={set('finalConsumerPrice')} keyboardType="numeric" />
 
               <Text style={styles.label}>{t('harvest.transport')}</Text>
-              <TextInput style={styles.input} placeholder="e.g. 5" placeholderTextColor={Colors.textMuted}
+              <TextInput style={styles.input} placeholder={text.transportPlaceholder} placeholderTextColor={Colors.textMuted}
                 value={form.transportCost} onChangeText={set('transportCost')} keyboardType="numeric" />
 
               <View style={styles.modalBtns}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}>
-                  <Text style={{ color: Colors.textSecondary, fontWeight: '600' }}>Cancel</Text>
+                  <Text style={{ color: Colors.textSecondary, fontWeight: '600' }}>{text.cancel}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.submitBtn} onPress={handleAdd} disabled={submitting}>
                   {submitting
@@ -474,8 +602,8 @@ export default function HarvestScreen() {
         <View style={styles.miningOverlay}>
           <View style={styles.miningCard}>
             <Animated.Text style={[styles.miningIcon, { transform: [{ rotate: miningSpinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }] }]}>⛏️</Animated.Text>
-            <Text style={styles.miningTitle}>Mining Block...</Text>
-            <Text style={styles.miningSubtitle}>Computing SHA-256 hash</Text>
+            <Text style={styles.miningTitle}>{text.miningTitle}</Text>
+            <Text style={styles.miningSubtitle}>{text.miningSubtitle}</Text>
             <View style={styles.miningHashBox}>
               <Text style={styles.miningHashText} numberOfLines={2}>{miningHash}</Text>
             </View>
